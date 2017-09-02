@@ -12,10 +12,14 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+import {SourceRange} from '../analysis-format/analysis-format';
+import {addAll} from '../core/utils';
+
 import {Document} from './document';
 import {Feature} from './feature';
 import {ImmutableMap, ImmutableSet} from './immutable';
 import {AnalysisQuery as Query, AnalysisQueryWithKind as QueryWithKind, DocumentQuery, FeatureKind, FeatureKindMap, Queryable} from './queryable';
+import {isPositionInsideRange} from './source-range';
 import {Warning} from './warning';
 
 
@@ -45,8 +49,9 @@ export class Analysis implements Queryable {
     workAroundDuplicateJsScriptsBecauseOfHtmlScriptTags(results);
 
     this._results = results;
-    const documents = Array.from(results.values())
-                          .filter((r) => r instanceof Document) as Document[];
+    const documents =
+        Array.from(results.values()).filter((r) => r instanceof Document) as
+        Document[];
     const potentialRoots = new Set(documents);
 
     // We trim down the set of documents as a performance optimization. We only
@@ -117,6 +122,33 @@ export class Analysis implements Queryable {
     return Array.from(result);
   }
 
+  /**
+   * Potentially narrow down the document that contains the sourceRange.
+   * For example, if a source range is inside a inlineDocument, this function
+   * will narrow down the document to the most specific inline document.
+   *
+   * @param sourceRange Source range to search for in a document
+   * @param document The document that contains the source range
+   */
+  getDocumentContaining(sourceRange: SourceRange|undefined, document: Document):
+      Document|undefined {
+    if (!sourceRange) {
+      return undefined;
+    }
+    let mostSpecificDocument: undefined|Document = undefined;
+    for (const doc of document.getFeatures({kind: 'document'})) {
+      if (isPositionInsideRange(sourceRange.start, doc.sourceRange)) {
+        if (!mostSpecificDocument ||
+            isPositionInsideRange(
+                doc.sourceRange!.start, mostSpecificDocument.sourceRange)) {
+          mostSpecificDocument = doc;
+        }
+      }
+    }
+    mostSpecificDocument = mostSpecificDocument || document;
+    return mostSpecificDocument;
+  }
+
   private _getDocumentQuery(query: Query = {}): DocumentQuery {
     return {
       kind: query.kind,
@@ -126,14 +158,6 @@ export class Analysis implements Queryable {
       noLazyImports: query.noLazyImports
     };
   }
-}
-
-// TODO(justinfagnani): move to utils
-function addAll<T>(set1: Set<T>, set2: Set<T>): Set<T> {
-  for (const val of set2) {
-    set1.add(val);
-  }
-  return set1;
 }
 
 /**
@@ -151,8 +175,9 @@ function addAll<T>(set1: Set<T>, set2: Set<T>): Set<T> {
  */
 function workAroundDuplicateJsScriptsBecauseOfHtmlScriptTags(
     results: Map<string, Document|Warning>) {
-  const documents = Array.from(results.values())
-                        .filter((r) => r instanceof Document) as Document[];
+  const documents =
+      Array.from(results.values()).filter((r) => r instanceof Document) as
+      Document[];
   // TODO(rictic): handle JS imported via script src from HTML better than
   //     this.
   const potentialDuplicates =
