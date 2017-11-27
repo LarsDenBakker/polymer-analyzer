@@ -30,7 +30,10 @@ export abstract class UrlResolver {
   /**
    * Returns `true` if this resolver can resolve the given `url`.
    */
-  abstract canResolve(url: PackageRelativeUrl|FileRelativeUrl): boolean;
+  abstract canResolve(url: PackageRelativeUrl): boolean;
+  abstract canResolve(url: FileRelativeUrl, baseUrl: ResolvedUrl): boolean;
+  abstract canResolve(
+      url: PackageRelativeUrl|FileRelativeUrl, baseUrl?: ResolvedUrl): boolean;
 
   /**
    * Resoves `url` to a new location.

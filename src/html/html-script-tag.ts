@@ -33,7 +33,7 @@ export class ScriptTagBackReferenceImport extends Import {
 
 export class ScannedScriptTagImport extends ScannedImport {
   resolve(document: Document): ScriptTagImport|undefined {
-    if (!document._analysisContext.canResolveUrl(this.url)) {
+    if (!document._analysisContext.canResolveUrl(this.url, document.url)) {
       return;
     }
 

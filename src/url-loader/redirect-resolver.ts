@@ -12,7 +12,9 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {PackageRelativeUrl, ResolvedUrl} from '../model/url';
+import {resolve as urlLibResolver} from 'url';
+
+import {FileRelativeUrl, PackageRelativeUrl, ResolvedUrl} from '../model/url';
 
 import {UrlResolver} from './url-resolver';
 
@@ -24,7 +26,11 @@ export class RedirectResolver extends UrlResolver {
     super();
   }
 
-  canResolve(url: PackageRelativeUrl): boolean {
+  canResolve(url: PackageRelativeUrl|FileRelativeUrl, baseUrl?: ResolvedUrl):
+      boolean {
+    if (baseUrl !== undefined) {
+      url = urlLibResolver(baseUrl, url) as PackageRelativeUrl;
+    }
     return url.startsWith(this._redirectFrom);
   }
 

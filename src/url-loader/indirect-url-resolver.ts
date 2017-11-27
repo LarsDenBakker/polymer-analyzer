@@ -15,6 +15,7 @@
 import {posix as path} from 'path';
 import {resolve as basicResolveUrl} from 'url';
 
+import {parseUrl} from '../core/utils';
 import {FileRelativeUrl, PackageRelativeUrl, ResolvedUrl} from '../model/url';
 
 import {UrlResolver} from './url-resolver';
@@ -60,7 +61,12 @@ export class IndirectUrlResolver extends UrlResolver {
     this.filesystemToUrlspace = filesystemToUrlspace;
   }
 
-  canResolve(_url: PackageRelativeUrl|FileRelativeUrl): boolean {
+  canResolve(url: PackageRelativeUrl|FileRelativeUrl, _baseUrl?: ResolvedUrl):
+      boolean {
+    const urlObject = parseUrl(url);
+    if (urlObject.host != null || urlObject.protocol != null) {
+      return false;
+    }
     return true;
   }
 

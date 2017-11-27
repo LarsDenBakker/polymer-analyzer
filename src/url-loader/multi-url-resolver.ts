@@ -12,7 +12,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {PackageRelativeUrl, ResolvedUrl} from '../model/url';
+import {FileRelativeUrl, PackageRelativeUrl, ResolvedUrl} from '../model/url';
 
 import {UrlResolver} from './url-resolver';
 
@@ -27,9 +27,10 @@ export class MultiUrlResolver extends UrlResolver {
     }
   }
 
-  canResolve(url: PackageRelativeUrl): boolean {
+  canResolve(url: PackageRelativeUrl|FileRelativeUrl, baseUrl?: ResolvedUrl):
+      boolean {
     return this._resolvers.some((resolver) => {
-      return resolver.canResolve(url);
+      return resolver.canResolve(url, baseUrl);
     });
   }
 

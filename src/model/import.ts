@@ -66,7 +66,7 @@ export class ScannedImport implements Resolvable {
   }
 
   resolve(document: Document): Import|undefined {
-    if (!document._analysisContext.canResolveUrl(this.url)) {
+    if (!document._analysisContext.canResolveUrl(this.url, document.url)) {
       return;
     }
     const resolvedUrl = document._analysisContext.resolveUrlFromFile(
