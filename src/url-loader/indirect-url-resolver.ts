@@ -12,18 +12,16 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import * as path from 'path';
+import {posix as path} from 'path';
 import {resolve as basicResolveUrl} from 'url';
 
 import {FileRelativeUrl, PackageRelativeUrl, ResolvedUrl} from '../model/url';
 
 import {UrlResolver} from './url-resolver';
 
-interface IndirectionMap {
-  readonly [urlspacePath: string]: string;
-}
+export interface IndirectionMap { readonly [urlspacePath: string]: string; }
 
-export class IndirectUrlLoader extends UrlResolver {
+export class IndirectUrlResolver extends UrlResolver {
   private readonly urlspaceToFilesystem: ReadonlyMap<string, string>;
   private readonly filesystemToUrlspace: ReadonlyMap<string, string>;
   private readonly rootPath: string;
@@ -49,20 +47,22 @@ export class IndirectUrlLoader extends UrlResolver {
   }
   resolve(url: PackageRelativeUrl): ResolvedUrl {
     const fullPath = path.normalize(path.join(this.packagePath, url));
-    if (!fullPath.startsWith(this.rootPath)) {
-      return path.join(this.rootPath, path.basename(fullPath)) as ResolvedUrl;
+    let rootRelativePath = path.relative(this.rootPath, fullPath);
+    while (rootRelativePath.startsWith('../')) {
+      rootRelativePath = rootRelativePath.slice(3);
     }
-    return fullPath as ResolvedUrl;
+    while (rootRelativePath.startsWith('/')) {
+      rootRelativePath = rootRelativePath.slice(1);
+    }
+    return rootRelativePath as ResolvedUrl;
   }
 
   resolveFileUrl(url: FileRelativeUrl, baseUrl: ResolvedUrl): ResolvedUrl {
-    const rootRelativePath = path.relative(this.rootPath, baseUrl);
-    const webBaseUrl = this.filesystemToUrlspace.get(rootRelativePath);
+    const webBaseUrl = this.filesystemToUrlspace.get(baseUrl);
     if (webBaseUrl === undefined) {
       throw new Error(
-          `No known mapping onto url space for filesystem path: ${
-                                                                  rootRelativePath
-                                                                }`);
+          `No known mapping onto url space for filesystem path: ` +
+          `${baseUrl}`);
     }
     const webFinalPath = basicResolveUrl(webBaseUrl, url);
     const resolvedPath = this.urlspaceToFilesystem.get(webFinalPath);
