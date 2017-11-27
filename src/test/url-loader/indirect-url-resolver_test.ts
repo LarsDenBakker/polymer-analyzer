@@ -15,19 +15,20 @@
 import {assert} from 'chai';
 
 import {Analyzer} from '../../core/analyzer';
+import {ResolvedUrl} from '../../model/url';
 import {IndirectUrlResolver} from '../../url-loader/indirect-url-resolver';
 import {InMemoryOverlayUrlLoader} from '../../url-loader/overlay-loader';
 
 suite('IndirectUrlResolver', function() {
 
-  test('the thing', async() => {
+  test('the core use case', async() => {
     const overlayLoader = new InMemoryOverlayUrlLoader();
-    const mapping = {
-      '/components/foo/foo.html': 'sub/package/foo/foo.html',
-      '/components/foo/foo.css': 'sub/package/foo/foo.css',
-      '/components/bar/bar.html': 'different/x/y/bar.html',
-      '/components/bar/bar.css': 'different/x/y/bar.css',
-    };
+    const mapping = new Map<string, string>([
+      ['/components/foo/foo.html', 'sub/package/foo/foo.html'],
+      ['/components/foo/foo.css', 'sub/package/foo/foo.css'],
+      ['/components/bar/bar.html', 'different/x/y/bar.html'],
+      ['/components/bar/bar.css', 'different/x/y/bar.css'],
+    ]);
     overlayLoader.urlContentsMap.set('sub/package/foo/foo.html', `
       <link rel="import" href="../bar/bar.html">
       <link rel="stylesheet" href="foo.css">
@@ -52,6 +53,21 @@ suite('IndirectUrlResolver', function() {
       'different/x/y/bar.css',
       'sub/package/foo/foo.css'
     ]);
+    const imports = analysis.getFeatures({kind: 'import'});
+    assert.deepEqual(
+        [...imports].map((i) => i.originalUrl),
+        ['../bar/bar.html', './bar.css', 'foo.css']);
+    assert.deepEqual([...imports].map((i) => i.url), [
+      'different/x/y/bar.html',
+      'different/x/y/bar.css',
+      'sub/package/foo/foo.css'
+    ]);
+
+    assert.deepEqual(
+        indirectResolver.getRelativePath(
+            'different/x/y/bar.html' as ResolvedUrl,
+            'sub/package/foo/foo.css' as ResolvedUrl),
+        `../foo/foo.css`);
   });
 
 });

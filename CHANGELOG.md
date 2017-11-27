@@ -6,12 +6,20 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
-<!-- Add new, unreleased changes here. -->
 * Add `Import#originalUrl` which has the original url of the import as it was
   encountered in the document, before it was resolved relative to the base url
   of its containing document.
 * Added missing model typings for branded `url` types to top-level package
   exports.
+* Add `UrlResolver#getRelativePath(from, to)` for getting a relative url from
+  one resolved url to another.
+* Add `IndirectUrlResolver`, a URL resolver for very large codebases where
+  source files map in an arbitrary but predetermined fashion onto URL space.
+  This resolver is still experimental.
+  * It is generally true that if something has to be imported from
+    `polymer-analyzer/lib/...` then it's not yet stable. caveat importer.
+<!-- Add new, unreleased changes here. -->
+
 
 ## [3.0.0-pre.2] - 2017-11-30
 

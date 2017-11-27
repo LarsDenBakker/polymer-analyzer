@@ -11,6 +11,8 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
+
+import {posix as path} from 'path';
 import {resolve as urlLibResolver} from 'url';
 
 import {ScannedImport} from '../index';
@@ -41,6 +43,10 @@ export abstract class UrlResolver {
     const packageRelativeUrl =
         urlLibResolver(baseUrl, url) as PackageRelativeUrl;
     return this.resolve(packageRelativeUrl);
+  }
+
+  getRelativePath(from: ResolvedUrl, to: ResolvedUrl): FileRelativeUrl {
+    return path.relative(path.dirname(from), to) as FileRelativeUrl;
   }
 
   protected brandAsResolved(url: string): ResolvedUrl {
