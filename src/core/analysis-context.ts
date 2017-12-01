@@ -25,10 +25,12 @@ import {HtmlScriptScanner} from '../html/html-script-scanner';
 import {HtmlStyleScanner} from '../html/html-style-scanner';
 import {ClassScanner} from '../javascript/class-scanner';
 import {FunctionScanner} from '../javascript/function-scanner';
+import {JavaScriptImportScanner} from '../javascript/javascript-import-scanner';
 import {JavaScriptParser} from '../javascript/javascript-parser';
 import {NamespaceScanner} from '../javascript/namespace-scanner';
 import {JsonParser} from '../json/json-parser';
 import {Document, InlineDocInfo, LocationOffset, ScannedDocument, ScannedElement, ScannedImport, ScannedInlineDocument, Severity, Warning, WarningCarryingException} from '../model/model';
+import {PackageRelativeUrl, ResolvedUrl} from '../model/url';
 import {ParsedDocument} from '../parser/document';
 import {Parser} from '../parser/parser';
 import {BehaviorScanner} from '../polymer/behavior-scanner';
@@ -115,7 +117,8 @@ export class AnalysisContext {
           new BehaviorScanner(),
           new NamespaceScanner(),
           new FunctionScanner(),
-          new ClassScanner()
+          new ClassScanner(),
+          new JavaScriptImportScanner()
         ]
       ],
       ['css', [new CssCustomPropertyScanner()]]
@@ -136,7 +139,7 @@ export class AnalysisContext {
   /**
    * Returns a copy of this cache context with proper cache invalidation.
    */
-  filesChanged(urls: string[]) {
+  filesChanged(urls: PackageRelativeUrl[]) {
     const newCache =
         this._cache.invalidate(urls.map((url) => this.resolveUrl(url)));
     return this._fork(newCache);
@@ -145,7 +148,7 @@ export class AnalysisContext {
   /**
    * Implements Analyzer#analyze, see its docs.
    */
-  async analyze(urls: string[]): Promise<AnalysisContext> {
+  async analyze(urls: PackageRelativeUrl[]): Promise<AnalysisContext> {
     const resolvedUrls = urls.map((url) => this.resolveUrl(url));
 
     // 1. Await current analysis if there is one, so we can check to see if has
@@ -169,7 +172,8 @@ export class AnalysisContext {
   /**
    * Internal analysis method called when we know we need to fork.
    */
-  private async _analyze(resolvedUrls: string[]): Promise<AnalysisContext> {
+  private async _analyze(resolvedUrls: ResolvedUrl[]):
+      Promise<AnalysisContext> {
     const analysisComplete = (async () => {
       // 1. Load and scan all root documents
       const scannedDocumentsOrWarnings =
@@ -211,8 +215,7 @@ export class AnalysisContext {
    * the scanned document cache is used and a new analyzed Document is returned.
    * If a file is in neither cache, it returns `undefined`.
    */
-  getDocument(url: string): Document|Warning {
-    const resolvedUrl = this.resolveUrl(url);
+  getDocument(resolvedUrl: ResolvedUrl): Document|Warning {
     const cachedWarning = this._cache.failedDocuments.get(resolvedUrl);
     if (cachedWarning) {
       return cachedWarning;
@@ -223,16 +226,16 @@ export class AnalysisContext {
     }
     const scannedDocument = this._cache.scannedDocuments.get(resolvedUrl);
     if (!scannedDocument) {
-      return <Warning>{
+      return {
         sourceRange: {
-          file: this.resolveUrl(url),
+          file: resolvedUrl,
           start: {line: 0, column: 0},
           end: {line: 0, column: 0}
         },
         code: 'unable-to-analyze',
-        message: `Document not found: ${url}`,
+        message: `Document not found: ${resolvedUrl}`,
         severity: Severity.ERROR
-      };
+      } as any;
     }
 
     const extension = path.extname(resolvedUrl).substring(1);
@@ -256,8 +259,7 @@ export class AnalysisContext {
    *
    * If a url has been scanned, returns the ScannedDocument.
    */
-  _getScannedDocument(url: string): ScannedDocument|undefined {
-    const resolvedUrl = this.resolveUrl(url);
+  _getScannedDocument(resolvedUrl: ResolvedUrl): ScannedDocument|undefined {
     return this._cache.scannedDocuments.get(resolvedUrl);
   }
 
@@ -307,7 +309,7 @@ export class AnalysisContext {
    * _preScan, since about the only useful things it can find are
    * imports, exports and other syntactic structures.
    */
-  private async _scanLocal(resolvedUrl: string): Promise<ScannedDocument> {
+  private async _scanLocal(resolvedUrl: ResolvedUrl): Promise<ScannedDocument> {
     return this._cache.scannedDocumentPromises.getOrCompute(
         resolvedUrl, async () => {
           try {
@@ -333,7 +335,7 @@ export class AnalysisContext {
   /**
    * Scan a toplevel document and all of its transitive dependencies.
    */
-  async scan(resolvedUrl: string): Promise<ScannedDocument> {
+  async scan(resolvedUrl: ResolvedUrl): Promise<ScannedDocument> {
     return this._cache.dependenciesScannedPromises.getOrCompute(
         resolvedUrl, async () => {
           const scannedDocument = await this._scanLocal(resolvedUrl);
@@ -429,7 +431,7 @@ export class AnalysisContext {
    * semantics defined by `UrlLoader` and should only be used to check
    * resolved URLs.
    */
-  canLoad(resolvedUrl: string): boolean {
+  canLoad(resolvedUrl: ResolvedUrl): boolean {
     return this.loader.canLoad(resolvedUrl);
   }
 
@@ -442,7 +444,7 @@ export class AnalysisContext {
    * are used instead of hitting the UrlLoader (e.g. when you have in-memory
    * contents that should override disk).
    */
-  async load(resolvedUrl: string): Promise<string> {
+  async load(resolvedUrl: ResolvedUrl): Promise<string> {
     if (!this.canLoad(resolvedUrl)) {
       throw new Error(`Can't load URL: ${resolvedUrl}`);
     }
@@ -452,7 +454,7 @@ export class AnalysisContext {
   /**
    * Caching + loading wrapper around _parseContents.
    */
-  private async _parse(resolvedUrl: string): Promise<ParsedDocument> {
+  private async _parse(resolvedUrl: ResolvedUrl): Promise<ParsedDocument> {
     return this._cache.parsedDocumentPromises.getOrCompute(
         resolvedUrl, async () => {
           const content = await this.load(resolvedUrl);
@@ -466,7 +468,7 @@ export class AnalysisContext {
    * to its type.
    */
   private _parseContents(
-      type: string, contents: string, url: string,
+      type: string, contents: string, url: ResolvedUrl,
       inlineInfo?: InlineDocInfo<any>): ParsedDocument {
     const parser = this.parsers.get(type);
     if (parser == null) {
@@ -485,7 +487,7 @@ export class AnalysisContext {
   /**
    * Returns true if the url given is resovable by the Analyzer's `UrlResolver`.
    */
-  canResolveUrl(url: string): boolean {
+  canResolveUrl(url: PackageRelativeUrl): boolean {
     return this.resolver.canResolve(url);
   }
 
@@ -493,7 +495,8 @@ export class AnalysisContext {
    * Resolves a URL with this Analyzer's `UrlResolver` or returns the given
    * URL if it can not be resolved.
    */
-  resolveUrl(url: string): string {
-    return this.resolver.canResolve(url) ? this.resolver.resolve(url) : url;
+  resolveUrl(url: PackageRelativeUrl): ResolvedUrl {
+    return this.resolver.canResolve(url) ? this.resolver.resolve(url) :
+                                           (url as any as ResolvedUrl);
   }
 }

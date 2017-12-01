@@ -5,18 +5,52 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## Unreleased
+<!-- Add new, unreleased changes here. -->
+* Introduce getDocumentContaining to find containing inline document for a feature
 
-<!--
-   PRs should document their user-visible changes (if any) in the
-   Unreleased section, uncommenting the header as necessary.
--->
+## [3.0.0-pre.2] - 2017-11-30
 
- ## Unreleased
+* Added `js-import` feature with `lazy: true` for dynamic imports call expressions of the form `import()`.
+* Functions will now be scanned if they have a `@global` annotation. Previously they would only be scanned if they had a `@memberof` annotation. One of these annotations is required because otherwise a lot of functions that aren't really public are included in the analysis (e.g. because they are hidden due to their scoping).
+* Function names can now be overridden with e.g. `@function MyNewName`.
+
+## [3.0.0-pre.1] - 2017-11-29
+
+* [BREAKING] Switched the underlying parser/AST for JavaScript from `espree/estree` to `babylon/babel-types`.  This was needed to support parsing of important platform features such as dynamic imports and moves us closer to supporting TypeScript.
+* When printing Warnings, use one-based indexes for lines and columns, as most text editors and other tools do.
+
+## [2.7.0] - 2017-11-16
+
+* Emit more accurate super classes for Elements when generating analysis JSON.
+* Added the concept of automatically safe fixes and less-safe edit actions for Warnings. This is an upstreaming of functionality originally defined in polymer-linter.
+
+## [2.6.0] - 2017-11-06
+
+* Add `defaultValue` and `rest` fields to method parameters.
+
+## [2.5.0] - 2017-11-05
+
+* Use branded subtypes of string to be more careful about how we canonicalize and resolve urls. They're totally normal strings at runtime. TypeScript users that wrote their own UrlLoaders or UrlResolvers may need to make some minor changes to compile green, but since runtime isn't broken this isn't a breaking change. See src/mode/url.ts for more info.
+* Handle method rest parameters correctly.
+
+## [2.4.1] - 2017-10-31
+
+* Minor fixes for TypeScript 2.6 compatibility.
+
+## [2.4.0] - 2017-10-26
+
+* Scan for module imports in inline and external JavaScript, analyzing the entire import graph.
+* Changed the way HTML script tag containing document features are made available to the JavaScript document, by creating a ScriptTagBackReferenceImport instead of appending the HTML document features directly to JavaScript document.
+* [minor] Add an `astNode` property on `Slot`.
+* Improve handling of types of properties defined in a behavior or legacy polymer element.
+
+## [2.3.0] - 2017-09-25
 
 * Scan for CSS custom variable uses and assignments.
-* Fix value of reflectToAttribute for polymer properties
-* Remove scriptElement from PolymerElement
-* Introduce getDocumentContaining to find containing inline document for a feature
+* Fix value of reflectToAttribute for polymer properties.
+* Remove scriptElement from PolymerElement.
+* `html-style` features are now scanned for inside templates.
 
 ## [2.2.2] - 2017-07-20
 

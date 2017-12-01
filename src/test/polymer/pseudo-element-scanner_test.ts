@@ -16,10 +16,10 @@ import {assert} from 'chai';
 
 import {HtmlVisitor} from '../../html/html-document';
 import {HtmlParser} from '../../html/html-parser';
+import {ResolvedUrl} from '../../model/url';
 import {PseudoElementScanner} from '../../polymer/pseudo-element-scanner';
 
 suite('PseudoElementScanner', () => {
-
   suite('scan()', () => {
     let scanner: PseudoElementScanner;
 
@@ -27,7 +27,7 @@ suite('PseudoElementScanner', () => {
       scanner = new PseudoElementScanner();
     });
 
-    test('finds pseudo elements in html comments ', async() => {
+    test('finds pseudo elements in html comments ', async () => {
       const desc = `This is a pseudo element`;
       const contents = `<html><head></head><body>
           <!--
@@ -37,8 +37,9 @@ suite('PseudoElementScanner', () => {
           -->
         </body>
         </html>`;
-      const document = new HtmlParser().parse(contents, 'test.html');
-      const visit = async(visitor: HtmlVisitor) => document.visit([visitor]);
+      const document =
+          new HtmlParser().parse(contents, 'test.html' as ResolvedUrl);
+      const visit = async (visitor: HtmlVisitor) => document.visit([visitor]);
 
       const {features} = await scanner.scan(document, visit);
       assert.equal(features.length, 1);
@@ -48,7 +49,5 @@ suite('PseudoElementScanner', () => {
       assert.deepEqual(
           features[0].demos, [{desc: 'demo', path: 'demo/index.html'}]);
     });
-
   });
-
 });

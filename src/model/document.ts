@@ -24,6 +24,7 @@ import {ScannedInlineDocument} from './inline-document';
 import {DocumentQuery as Query, DocumentQueryWithKind as QueryWithKind, FeatureKind, FeatureKindMap, Queryable} from './queryable';
 import {isResolvable} from './resolvable';
 import {SourceRange} from './source-range';
+import {ResolvedUrl} from './url';
 import {Warning} from './warning';
 
 /**
@@ -138,7 +139,7 @@ export class Document implements Feature, Queryable {
     this.warnings = Array.from(base.warnings);
   }
 
-  get url(): string {
+  get url(): ResolvedUrl {
     return this._scannedDocument.url;
   }
 
@@ -378,14 +379,9 @@ export class Document implements Feature, Queryable {
       } else {
         let subResult = localFeature.toString();
         if (subResult === '[object Object]') {
-          subResult = `<${
-                          localFeature.constructor.name
-                        } kinds="${
-                                   Array.from(localFeature.kinds).join(', ')
-                                 }" ids="${
-                                           Array.from(localFeature.identifiers)
-                                               .join(',')
-                                         }">}`;
+          subResult = `<${localFeature.constructor.name} kinds="${
+              Array.from(localFeature.kinds).join(', ')}" ids="${
+              Array.from(localFeature.identifiers).join(',')}">}`;
         }
         result.push(`  ${subResult}`);
       }

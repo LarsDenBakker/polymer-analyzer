@@ -17,10 +17,10 @@ import {assert} from 'chai';
 
 import {HtmlVisitor} from '../../html/html-document';
 import {HtmlParser} from '../../html/html-parser';
+import {ResolvedUrl} from '../../model/url';
 import {CssImportScanner} from '../../polymer/css-import-scanner';
 
 suite('CssImportScanner', () => {
-
   suite('scan()', () => {
     let scanner: CssImportScanner;
 
@@ -28,7 +28,7 @@ suite('CssImportScanner', () => {
       scanner = new CssImportScanner();
     });
 
-    test('finds CSS Imports', async() => {
+    test('finds CSS Imports', async () => {
       const contents = `<html><head>
           <link rel="import" href="polymer.html">
           <link rel="import" type="css" href="ignored-outside-dom-module.css">
@@ -44,8 +44,9 @@ suite('CssImportScanner', () => {
           </dom-module>
         </body>
         </html>`;
-      const document = new HtmlParser().parse(contents, 'test.html');
-      const visit = async(visitor: HtmlVisitor) => document.visit([visitor]);
+      const document =
+          new HtmlParser().parse(contents, 'test.html' as ResolvedUrl);
+      const visit = async (visitor: HtmlVisitor) => document.visit([visitor]);
 
       const {features} = await scanner.scan(document, visit);
       assert.equal(features.length, 1);
@@ -53,7 +54,7 @@ suite('CssImportScanner', () => {
       assert.equal(features[0].url, 'polymer.css');
     });
 
-    test('adjusts CSS Import urls relative to baseUrl', async() => {
+    test('adjusts CSS Import urls relative to baseUrl', async () => {
       const contents = `<html><head><base href="/aybabtu/">
         </head>
         <body>
@@ -62,15 +63,14 @@ suite('CssImportScanner', () => {
           </dom-module>
         </body>
         </html>`;
-      const document = new HtmlParser().parse(contents, 'test.html');
-      const visit = async(visitor: HtmlVisitor) => document.visit([visitor]);
+      const document =
+          new HtmlParser().parse(contents, 'test.html' as ResolvedUrl);
+      const visit = async (visitor: HtmlVisitor) => document.visit([visitor]);
 
       const {features} = await scanner.scan(document, visit);
       assert.equal(features.length, 1);
       assert.equal(features[0].type, 'css-import');
       assert.equal(features[0].url, '/aybabtu/polymer.css');
     });
-
   });
-
 });

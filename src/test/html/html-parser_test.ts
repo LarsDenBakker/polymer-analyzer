@@ -17,11 +17,10 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 import {HtmlParser} from '../../html/html-parser';
+import {ResolvedUrl} from '../../model/url';
 
 suite('HtmlParser', () => {
-
   suite('parse()', () => {
-
     let parser: HtmlParser;
 
     setup(() => {
@@ -33,12 +32,14 @@ suite('HtmlParser', () => {
           path.resolve(__dirname, '../static/html-parse-target.html'), 'utf8');
 
       test('parses a well-formed document', () => {
-        const document = parser.parse(file, '/static/html-parse-target.html');
+        const document =
+            parser.parse(file, '/static/html-parse-target.html' as ResolvedUrl);
         assert.equal(document.url, '/static/html-parse-target.html');
       });
 
       test('can stringify back a well-formed document', () => {
-        const document = parser.parse(file, '/static/html-parse-target.html');
+        const document =
+            parser.parse(file, '/static/html-parse-target.html' as ResolvedUrl);
         assert.deepEqual(document.stringify(), file);
       });
     });
@@ -47,8 +48,8 @@ suite('HtmlParser', () => {
       const file = fs.readFileSync(
           path.resolve(__dirname, '../static/base-href/doc-with-base.html'),
           'utf8');
-      const document =
-          parser.parse(file, '/static/base-href/doc-with-base.html');
+      const document = parser.parse(
+          file, '/static/base-href/doc-with-base.html' as ResolvedUrl);
       assert.equal(document.url, '/static/base-href/doc-with-base.html');
       assert.equal(document.baseUrl, '/static/');
     });

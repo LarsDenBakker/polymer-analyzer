@@ -12,7 +12,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import * as estree from 'estree';
+import * as babel from 'babel-types';
 
 import {Document, Feature, Privacy, Resolvable, SourceRange, Warning} from '../model/model';
 
@@ -24,17 +24,23 @@ export class ScannedFunction implements Resolvable {
   summary?: string;
   jsdoc?: JsDocAnnotation;
   sourceRange: SourceRange;
-  astNode: estree.Node;
+  astNode: babel.Node;
   warnings: Warning[];
   params?: {name: string, type?: string}[];
   return?: {type?: string, desc: string};
   privacy: Privacy;
 
   constructor(
-      name: string, description: string, summary: string, privacy: Privacy,
-      astNode: estree.Node, jsdoc: JsDocAnnotation, sourceRange: SourceRange,
+      name: string,
+      description: string,
+      summary: string,
+      privacy: Privacy,
+      astNode: babel.Node,
+      jsdoc: JsDocAnnotation,
+      sourceRange: SourceRange,
       params?: {name: string, type?: string}[],
-      returnData?: {type?: string, desc: string}, ) {
+      returnData?: {type?: string, desc: string},
+  ) {
     this.name = name;
     this.description = description;
     this.summary = summary;

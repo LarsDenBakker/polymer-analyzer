@@ -20,33 +20,58 @@ import * as path from 'path';
 import {Visitor} from '../../javascript/estree-visitor';
 import {JavaScriptImportScanner} from '../../javascript/javascript-import-scanner';
 import {JavaScriptParser} from '../../javascript/javascript-parser';
+import {ResolvedUrl} from '../../model/url';
 
 suite('JavaScriptImportScanner', () => {
-
   const parser = new JavaScriptParser();
   const scanner = new JavaScriptImportScanner();
 
-  test('finds imports', async() => {
+  test('finds imports', async () => {
     const file = fs.readFileSync(
         path.resolve(__dirname, '../static/javascript/module.js'), 'utf8');
-    const document = parser.parse(file, '/static/javascript/module.js');
+    const document =
+        parser.parse(file, '/static/javascript/module.js' as ResolvedUrl);
 
     const visit = (visitor: Visitor) =>
         Promise.resolve(document.visit([visitor]));
 
     const {features} = await scanner.scan(document, visit);
-    assert.equal(features.length, 1);
-    assert.equal(features[0].type, 'js-import');
-    assert.equal(features[0].url, '/static/javascript/submodule.js');
+    assert.containSubset(features, [
+      {
+        type: 'js-import',
+        url: '/static/javascript/submodule.js',
+        lazy: false,
+      },
+    ]);
   });
 
-  test('skips non-path imports', async() => {
+  test('finds dynamic imports', async () => {
+    const file = fs.readFileSync(
+        path.resolve(__dirname, '../static/javascript/dynamic-import.js'),
+        'utf8');
+    const document = parser.parse(
+        file, '/static/javascript/dynamic-import.js' as ResolvedUrl);
+
+    const visit = (visitor: Visitor) =>
+        Promise.resolve(document.visit([visitor]));
+
+    const {features} = await scanner.scan(document, visit);
+    assert.containSubset(features, [
+      {
+        type: 'js-import',
+        url: '/static/javascript/submodule.js',
+        lazy: true,
+      },
+    ]);
+  });
+
+  test('skips non-path imports', async () => {
     const file = fs.readFileSync(
         path.resolve(
             __dirname, '../static/javascript/module-with-named-import.js'),
         'utf8');
-    const document =
-        parser.parse(file, '/static/javascript/module-with-named-import.js');
+    const document = parser.parse(
+        file, '/static/javascript/module-with-named-import.js' as ResolvedUrl);
 
     const visit = (visitor: Visitor) =>
         Promise.resolve(document.visit([visitor]));
@@ -54,5 +79,4 @@ suite('JavaScriptImportScanner', () => {
     const {features} = await scanner.scan(document, visit);
     assert.equal(features.length, 0);
   });
-
 });

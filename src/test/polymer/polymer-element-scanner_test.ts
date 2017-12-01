@@ -18,11 +18,11 @@ import {assert} from 'chai';
 
 import {Visitor} from '../../javascript/estree-visitor';
 import {JavaScriptParser} from '../../javascript/javascript-parser';
+import {ResolvedUrl} from '../../model/url';
 import {PolymerElementScanner} from '../../polymer/polymer-element-scanner';
 import {CodeUnderliner} from '../test-utils';
 
 suite('PolymerElementScanner', () => {
-
   suite('scan()', () => {
     let scanner: PolymerElementScanner;
 
@@ -30,7 +30,7 @@ suite('PolymerElementScanner', () => {
       scanner = new PolymerElementScanner();
     });
 
-    test('finds polymer elements', async() => {
+    test('finds polymer elements', async () => {
       const contents = `Polymer({
         is: 'x-foo',
         properties: {
@@ -94,15 +94,16 @@ suite('PolymerElementScanner', () => {
          */
         customPublicMethodWithJsDoc: (foo, bar) => { return foo + bar; },
         customPublicMethodWithClassicFunction: function(foo, bar) { return foo + bar; },
+        shorthandMethod(foo, bar) { return foo + bar; },
       });
       Polymer({
         is: 'x-bar',
         listeners: []
       });`;
 
-      const document =
-          new JavaScriptParser().parse(contents, 'test-document.html');
-      const visit = async(visitor: Visitor) => document.visit([visitor]);
+      const document = new JavaScriptParser().parse(
+          contents, 'test-document.html' as ResolvedUrl);
+      const visit = async (visitor: Visitor) => document.visit([visitor]);
 
       const {features} = await scanner.scan(document, visit);
 
@@ -154,6 +155,7 @@ suite('PolymerElementScanner', () => {
         '_customPrivateMethod',
         'customPublicMethodWithJsDoc',
         'customPublicMethodWithClassicFunction',
+        'shorthandMethod',
       ]);
 
       const jsDocMethod =
@@ -229,7 +231,7 @@ suite('PolymerElementScanner', () => {
           1);
     });
 
-    test('finds declared and assigned call expressions', async() => {
+    test('finds declared and assigned call expressions', async () => {
       const contents = `
           const MyOtherElement = Polymer({
             is: 'my-other-element'
@@ -237,9 +239,9 @@ suite('PolymerElementScanner', () => {
 
           window.MyElement = Polymer({is: 'my-element'});
       `;
-      const document =
-          new JavaScriptParser().parse(contents, 'test-document.html');
-      const visit = async(visitor: Visitor) => document.visit([visitor]);
+      const document = new JavaScriptParser().parse(
+          contents, 'test-document.html' as ResolvedUrl);
+      const visit = async (visitor: Visitor) => document.visit([visitor]);
 
       const {features} = await scanner.scan(document, visit);
       assert.deepEqual(
@@ -251,7 +253,7 @@ suite('PolymerElementScanner', () => {
 
     const testName =
         'Produces correct warnings for bad observers and computed properties';
-    test(testName, async() => {
+    test(testName, async () => {
       const contents = `
       Polymer({
         is: 'x-foo',
@@ -281,9 +283,9 @@ suite('PolymerElementScanner', () => {
 
       const underliner =
           CodeUnderliner.withMapping('test-document.html', contents);
-      const document =
-          new JavaScriptParser().parse(contents, 'test-document.html');
-      const visit = async(visitor: Visitor) => document.visit([visitor]);
+      const document = new JavaScriptParser().parse(
+          contents, 'test-document.html' as ResolvedUrl);
+      const visit = async (visitor: Visitor) => document.visit([visitor]);
 
       const {features} = await scanner.scan(document, visit);
       assert.deepEqual(features.length, 1);
@@ -323,7 +325,7 @@ suite('PolymerElementScanner', () => {
       ]);
     });
 
-    test('Polymer 2 class observers crash', async() => {
+    test('Polymer 2 class observers crash', async () => {
       // When Polymer 2 adopted a static getter for observers, it crashed
       // the Polymer 1 element scanner.
       const contents = `class TestElement extends Polymer.Element {
@@ -332,14 +334,12 @@ suite('PolymerElementScanner', () => {
         }
       }`;
 
-      const document =
-          new JavaScriptParser().parse(contents, 'test-document.html');
-      const visit = async(visitor: Visitor) => document.visit([visitor]);
+      const document = new JavaScriptParser().parse(
+          contents, 'test-document.html' as ResolvedUrl);
+      const visit = async (visitor: Visitor) => document.visit([visitor]);
 
       // Scanning should not throw
       await scanner.scan(document, visit);
     });
-
   });
-
 });

@@ -21,12 +21,13 @@ import * as path from 'path';
 import {Analyzer} from '../../core/analyzer';
 import {ParsedHtmlDocument} from '../../html/html-document';
 import {HtmlParser} from '../../html/html-parser';
+import {ResolvedUrl} from '../../model/url';
 import {FSUrlLoader} from '../../url-loader/fs-url-loader';
 import {CodeUnderliner} from '../test-utils';
 
 suite('ParsedHtmlDocument', () => {
   const parser: HtmlParser = new HtmlParser();
-  const url = './source-ranges/html-complicated.html';
+  const url = './source-ranges/html-complicated.html' as ResolvedUrl;
   const basedir = path.join(__dirname, '../static/');
   const file = fs.readFileSync(path.join(basedir, `${url}`), 'utf8');
   const document: ParsedHtmlDocument = parser.parse(file, url);
@@ -35,8 +36,7 @@ suite('ParsedHtmlDocument', () => {
   const underliner = new CodeUnderliner(urlLoader);
 
   suite('sourceRangeForNode()', () => {
-
-    test('works for comments', async() => {
+    test('works for comments', async () => {
       const comments = dom5.nodeWalkAll(
           document.ast, parse5.treeAdapters.default.isCommentNode);
 
@@ -56,11 +56,9 @@ suite('ParsedHtmlDocument', () => {
 ~~~~~~~~~~~~~
          Comment -->
 ~~~~~~~~~~~~~~~~~~~~`);
-
     });
 
-    test('works for elements', async() => {
-
+    test('works for elements', async () => {
       const liTags =
           dom5.queryAll(document.ast, dom5.predicates.hasTagName('li'));
 
@@ -113,8 +111,8 @@ suite('ParsedHtmlDocument', () => {
 
     const testName =
         'works for unclosed tags with attributes and no text content';
-    test(testName, async() => {
-      const url = 'unclosed-tag-attributes.html';
+    test(testName, async () => {
+      const url = 'unclosed-tag-attributes.html' as ResolvedUrl;
       const document = parser.parse(await analyzer.load(url), url);
 
       const tag = dom5.query(document.ast, dom5.predicates.hasTagName('tag'))!;
@@ -124,7 +122,7 @@ suite('ParsedHtmlDocument', () => {
 ~~~~~~~~~~`);
     });
 
-    test('works for void elements', async() => {
+    test('works for void elements', async () => {
       const linkTags =
           dom5.queryAll(document.ast, dom5.predicates.hasTagName('link'));
       assert.equal(linkTags.length, 2);
@@ -144,7 +142,7 @@ suite('ParsedHtmlDocument', () => {
 ~~~~~~~~~~~~~~~~~~`);
     });
 
-    test('works for text nodes', async() => {
+    test('works for text nodes', async () => {
       const titleTag =
           dom5.query(document.ast, dom5.predicates.hasTagName('title'))!;
 
@@ -186,7 +184,7 @@ suite('ParsedHtmlDocument', () => {
   });
 
   suite('sourceRangeForStartTag', () => {
-    test('it works for tags with no attributes', async() => {
+    test('it works for tags with no attributes', async () => {
       const liTags =
           dom5.queryAll(document.ast, dom5.predicates.hasTagName('li'));
 
@@ -219,7 +217,7 @@ suite('ParsedHtmlDocument', () => {
             ~~~~`);
     });
 
-    test('it works for void tags with no attributes', async() => {
+    test('it works for void tags with no attributes', async () => {
       const brTags =
           dom5.queryAll(document.ast, dom5.predicates.hasTagName('br'));
       assert.equal(brTags.length, 1);
@@ -232,7 +230,7 @@ suite('ParsedHtmlDocument', () => {
     ~~~~`);
     });
 
-    test('it works for void tags with attributes', async() => {
+    test('it works for void tags with attributes', async () => {
       const linkTags =
           dom5.queryAll(document.ast, dom5.predicates.hasTagName('link'));
       assert.equal(linkTags.length, 2);
@@ -254,7 +252,7 @@ suite('ParsedHtmlDocument', () => {
 ~~~~~~~~~~~~~~~~~~`);
     });
 
-    test('it works for normal elements with attributes', async() => {
+    test('it works for normal elements with attributes', async () => {
       const h1Tags =
           dom5.queryAll(document.ast, dom5.predicates.hasTagName('h1'));
       assert.equal(h1Tags.length, 2);
@@ -295,7 +293,7 @@ suite('ParsedHtmlDocument', () => {
     });
   });
   suite('sourceRangeForEndTag', () => {
-    test('it works for normal elements', async() => {
+    test('it works for normal elements', async () => {
       const h1Tags =
           dom5.queryAll(document.ast, dom5.predicates.hasTagName('h1'));
       assert.equal(h1Tags.length, 2);
@@ -326,7 +324,7 @@ suite('ParsedHtmlDocument', () => {
         dom5.queryAll(document.ast, dom5.predicates.hasTagName('complex-tag'));
     assert.equal(complexTags.length, 1);
 
-    test('works for boolean attributes', async() => {
+    test('works for boolean attributes', async () => {
       assert.deepEqual(
           await underliner.underline(document.sourceRangeForAttribute(
               complexTags[0]!, 'boolean-attr')),
@@ -335,7 +333,7 @@ suite('ParsedHtmlDocument', () => {
                  ~~~~~~~~~~~~`);
     });
 
-    test('works for one line string attributes', async() => {
+    test('works for one line string attributes', async () => {
       assert.deepEqual(
           await underliner.underline(
               document.sourceRangeForAttribute(complexTags[0]!, 'string-attr')),
@@ -344,7 +342,7 @@ suite('ParsedHtmlDocument', () => {
                  ~~~~~~~~~~~~~~~~~~~~~~~`);
     });
 
-    test('works for multiline string attributes', async() => {
+    test('works for multiline string attributes', async () => {
       assert.deepEqual(
           await underliner.underline(document.sourceRangeForAttribute(
               complexTags[0]!, 'multi-line-attr')),
@@ -361,7 +359,7 @@ suite('ParsedHtmlDocument', () => {
 
     test(
         'works for attributes with whitespace around the equals sign',
-        async() => {
+        async () => {
           assert.deepEqual(
               await underliner.underline(document.sourceRangeForAttribute(
                   complexTags[0]!, 'whitespace-around-equals')),
@@ -374,8 +372,8 @@ suite('ParsedHtmlDocument', () => {
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`);
         });
 
-    suite('for a void element', async() => {
-      test('works for a string attribute', async() => {
+    suite('for a void element', async () => {
+      test('works for a string attribute', async () => {
         const linkTags =
             dom5.queryAll(document.ast, dom5.predicates.hasTagName('link'));
         assert.equal(linkTags.length, 2);
@@ -402,7 +400,7 @@ suite('ParsedHtmlDocument', () => {
         dom5.queryAll(document.ast, dom5.predicates.hasTagName('complex-tag'));
     assert.equal(complexTags.length, 1);
 
-    test('works for boolean attributes', async() => {
+    test('works for boolean attributes', async () => {
       assert.deepEqual(
           await underliner.underline(document.sourceRangeForAttributeName(
               complexTags[0]!, 'boolean-attr')),
@@ -411,7 +409,7 @@ suite('ParsedHtmlDocument', () => {
                  ~~~~~~~~~~~~`);
     });
 
-    test('works for one line string attributes', async() => {
+    test('works for one line string attributes', async () => {
       assert.deepEqual(
           await underliner.underline(document.sourceRangeForAttributeName(
               complexTags[0]!, 'string-attr')),
@@ -420,7 +418,7 @@ suite('ParsedHtmlDocument', () => {
                  ~~~~~~~~~~~`);
     });
 
-    test('works for multiline string attributes', async() => {
+    test('works for multiline string attributes', async () => {
       assert.deepEqual(
           await underliner.underline(document.sourceRangeForAttributeName(
               complexTags[0]!, 'multi-line-attr')),
@@ -430,7 +428,7 @@ suite('ParsedHtmlDocument', () => {
     });
     test(
         'works for attributes with whitespace around the equals sign',
-        async() => {
+        async () => {
           assert.deepEqual(
               await underliner.underline(document.sourceRangeForAttributeName(
                   complexTags[0]!, 'whitespace-around-equals')),
@@ -439,8 +437,8 @@ suite('ParsedHtmlDocument', () => {
                 ~~~~~~~~~~~~~~~~~~~~~~~~`);
         });
 
-    suite('for a void element', async() => {
-      test('works for a string attribute', async() => {
+    suite('for a void element', async () => {
+      test('works for a string attribute', async () => {
         const linkTags =
             dom5.queryAll(document.ast, dom5.predicates.hasTagName('link'));
         assert.equal(linkTags.length, 2);
@@ -467,14 +465,14 @@ suite('ParsedHtmlDocument', () => {
         dom5.queryAll(document.ast, dom5.predicates.hasTagName('complex-tag'));
     assert.equal(complexTags.length, 1);
 
-    test('returns undefined for boolean attributes', async() => {
+    test('returns undefined for boolean attributes', async () => {
       assert.deepEqual(
           document.sourceRangeForAttributeValue(
               complexTags[0]!, 'boolean-attr'),
           undefined);
     });
 
-    test('works for one line string attributes', async() => {
+    test('works for one line string attributes', async () => {
       assert.deepEqual(
           await underliner.underline(document.sourceRangeForAttributeValue(
               complexTags[0]!, 'string-attr')),
@@ -483,7 +481,7 @@ suite('ParsedHtmlDocument', () => {
                              ~~~~~~~~~~~`);
     });
 
-    test('works for multiline string attributes', async() => {
+    test('works for multiline string attributes', async () => {
       assert.deepEqual(
           await underliner.underline(document.sourceRangeForAttributeValue(
               complexTags[0]!, 'multi-line-attr')),
@@ -500,7 +498,7 @@ suite('ParsedHtmlDocument', () => {
 
     test(
         'works for attributes with whitespace around the equals sign',
-        async() => {
+        async () => {
           assert.deepEqual(
               await underliner.underline(document.sourceRangeForAttributeValue(
                   complexTags[0]!, 'whitespace-around-equals')),
@@ -509,8 +507,8 @@ suite('ParsedHtmlDocument', () => {
                 ~~~~~~~~~~~~~~~~~~~`);
         });
 
-    suite('for a void element', async() => {
-      test('works for a string attribute', async() => {
+    suite('for a void element', async () => {
+      test('works for a string attribute', async () => {
         const linkTags =
             dom5.queryAll(document.ast, dom5.predicates.hasTagName('link'));
         assert.equal(linkTags.length, 2);

@@ -22,6 +22,7 @@ import {ClassScanner} from '../../javascript/class-scanner';
 import {Visitor} from '../../javascript/estree-visitor';
 import {JavaScriptDocument} from '../../javascript/javascript-document';
 import {JavaScriptParser} from '../../javascript/javascript-parser';
+import {ResolvedUrl} from '../../model/url';
 import {ScannedPolymerElement} from '../../polymer/polymer-element';
 
 
@@ -37,24 +38,23 @@ import {ScannedPolymerElement} from '../../polymer/polymer-element';
 chai.use(require('chai-subset'));
 
 suite('Polymer2ElementScanner - Vanilla Element Scanning', () => {
-
   const elements = new Map<string|undefined, ScannedPolymerElement>();
   let document: JavaScriptDocument;
   let elementsList: ScannedPolymerElement[];
 
-  suiteSetup(async() => {
+  suiteSetup(async () => {
     const parser = new JavaScriptParser();
     const file = fs.readFileSync(
         path.resolve(__dirname, '../static/vanilla-elements.js'), 'utf8');
-    document = parser.parse(file, '/static/vanilla-elements.js');
+    document = parser.parse(file, '/static/vanilla-elements.js' as ResolvedUrl);
     const scanner = new ClassScanner();
     const visit = (visitor: Visitor) =>
         Promise.resolve(document.visit([visitor]));
 
     const {features} = await scanner.scan(document, visit);
 
-    elementsList = features.filter(
-        (e) => e instanceof ScannedPolymerElement) as ScannedPolymerElement[];
+    elementsList = features.filter((e) => e instanceof ScannedPolymerElement) as
+        ScannedPolymerElement[];
     for (const element of elementsList) {
       elements.set(element.tagName, element);
     }

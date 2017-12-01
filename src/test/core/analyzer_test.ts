@@ -14,9 +14,9 @@
 
 /// <reference path="../../../node_modules/@types/mocha/index.d.ts" />
 
+import * as babel from 'babel-types';
 import {assert, use} from 'chai';
 import * as clone from 'clone';
-import * as estree from 'estree';
 import * as path from 'path';
 import * as shady from 'shady-css-parser';
 
@@ -31,12 +31,12 @@ import {Document, Import, ScannedImport, ScannedInlineDocument, Severity} from '
 import {FSUrlLoader} from '../../url-loader/fs-url-loader';
 import {InMemoryOverlayUrlLoader} from '../../url-loader/overlay-loader';
 import {UrlLoader} from '../../url-loader/url-loader';
-
 import {CodeUnderliner, invertPromise} from '../test-utils';
 
 import chaiAsPromised = require('chai-as-promised');
 import chaiSubset = require('chai-subset');
 import stripIndent = require('strip-indent');
+import {ResolvedUrl} from '../../model/url';
 
 use(chaiSubset);
 use(chaiAsPromised);
@@ -71,11 +71,14 @@ suite('Analyzer', () => {
   });
 
   test('canLoad delegates to the urlLoader canLoad method', () => {
-    assert.isTrue(analyzer.canLoad('/'), '/');
-    assert.isTrue(analyzer.canLoad('/path'), '/path');
-    assert.isFalse(analyzer.canLoad('../path'), '../path');
-    assert.isFalse(analyzer.canLoad('http://host/'), 'http://host/');
-    assert.isFalse(analyzer.canLoad('http://host/path'), 'http://host/path');
+    assert.isTrue(analyzer.canLoad('/' as ResolvedUrl), '/');
+    assert.isTrue(analyzer.canLoad('/path' as ResolvedUrl), '/path');
+    assert.isFalse(analyzer.canLoad('../path' as ResolvedUrl), '../path');
+    assert.isFalse(
+        analyzer.canLoad('http://host/' as ResolvedUrl), 'http://host/');
+    assert.isFalse(
+        analyzer.canLoad('http://host/path' as ResolvedUrl),
+        'http://host/path');
   });
 
   suite('canResolveUrl()', () => {
@@ -89,7 +92,6 @@ suite('Analyzer', () => {
   });
 
   suite('analyze()', () => {
-
     test(
         'analyzes a document with an inline Polymer element feature',
         async () => {
@@ -508,7 +510,6 @@ suite('Analyzer', () => {
     });
 
     suite('handles documents with spaces in filename', () => {
-
       test('given a url with unencoded spaces to analyze', async () => {
         const document = await analyzeDocument('static/spaces in file.html');
         const features = document.getFeatures({imported: true});
@@ -550,24 +551,25 @@ suite('Analyzer', () => {
 
   // TODO: reconsider whether we should test these private methods.
   suite('_parse()', () => {
-
     test('loads and parses an HTML document', async () => {
       const context = await getContext(analyzer);
-      const doc = await context['_parse']('static/html-parse-target.html');
+      const doc = await context['_parse'](
+          'static/html-parse-target.html' as ResolvedUrl);
       assert.instanceOf(doc, ParsedHtmlDocument);
       assert.equal(doc.url, 'static/html-parse-target.html');
     });
 
     test('loads and parses a JavaScript document', async () => {
       const context = await getContext(analyzer);
-      const doc = await context['_parse']('static/js-elements.js');
+      const doc =
+          await context['_parse']('static/js-elements.js' as ResolvedUrl);
       assert.instanceOf(doc, JavaScriptDocument);
       assert.equal(doc.url, 'static/js-elements.js');
     });
 
     test('returns a Promise that rejects for non-existant files', async () => {
       const context = await getContext(analyzer);
-      await invertPromise(context['_parse']('static/not-found'));
+      await invertPromise(context['_parse']('static/not-found' as ResolvedUrl));
     });
   });
 
@@ -578,7 +580,8 @@ suite('Analyzer', () => {
           <script src="foo.js"></script>
           <link rel="stylesheet" href="foo.css"></link>
         </head></html>`;
-      const document = new HtmlParser().parse(contents, 'test.html');
+      const document =
+          new HtmlParser().parse(contents, 'test.html' as ResolvedUrl);
       const context = await getContext(analyzer);
       const features =
           ((await context['_getScannedFeatures'](document)).features as
@@ -600,7 +603,8 @@ suite('Analyzer', () => {
             <link rel="import" type="css" href="bar.css">
           </dom-module>
         </body></html>`;
-      const document = new HtmlParser().parse(contents, 'test.html');
+      const document =
+          new HtmlParser().parse(contents, 'test.html' as ResolvedUrl);
       const context = await getContext(analyzer);
       const features =
           (await context['_getScannedFeatures'](document))
@@ -617,7 +621,8 @@ suite('Analyzer', () => {
           <style>body { color: red; }</style>
         </head></html>`;
       const context = await getContext(analyzer);
-      const document = new HtmlParser().parse(contents, 'test.html');
+      const document =
+          new HtmlParser().parse(contents, 'test.html' as ResolvedUrl);
       const features =
           ((await context['_getScannedFeatures'](document)).features) as
           ScannedInlineDocument[];
@@ -666,9 +671,9 @@ suite('Analyzer', () => {
       assert.equal(1, jsDocs.size);
       const jsDoc = getOnly(jsDocs);
       (jsDoc.parsedDocument as JavaScriptDocument).visit([{
-        enterCallExpression(node: estree.CallExpression) {
+        enterCallExpression(node: babel.CallExpression) {
           node.arguments =
-              [{type: 'Literal', value: 'bar', raw: 'bar'}] as estree.Literal[];
+              [{type: 'StringLiteral', value: 'bar'}] as babel.StringLiteral[];
         }
       }]);
 
@@ -754,7 +759,6 @@ var DuplicateNamespace = {};
       });
 
   suite('analyzePackage', () => {
-
     test('produces a package with the right documents', async () => {
       const analyzer = new Analyzer({
         urlLoader: new FSUrlLoader(path.join(testDir, 'static', 'project'))
@@ -997,7 +1001,8 @@ var DuplicateNamespace = {};
                 await p;
                 const docs = Array.from(
                     cacheContext['_cache'].analyzedDocuments.values());
-                assert.isTrue(new Set(docs.map((d) => d.url).sort()).has(path));
+                assert.isTrue(new Set(docs.map((d) => d.url).sort())
+                                  .has(path as ResolvedUrl));
               })());
             }
           }
@@ -1019,15 +1024,12 @@ var DuplicateNamespace = {};
         assert.deepEqual(document.url, 'base.html');
         const localFeatures = document.getFeatures({imported: false});
         const kinds = Array.from(localFeatures).map((f) => Array.from(f.kinds));
-        const message =
-            `localFeatures: ${
-                              JSON.stringify(
-                                  Array.from(localFeatures)
-                                      .map((f) => ({
-                                             kinds: Array.from(f.kinds),
-                                             ids: Array.from(f.identifiers)
-                                           })))
-                            }`;
+        const message = `localFeatures: ${
+            JSON.stringify(
+                Array.from(localFeatures).map((f) => ({
+                                                kinds: Array.from(f.kinds),
+                                                ids: Array.from(f.identifiers)
+                                              })))}`;
         assert.deepEqual(
             kinds,
             [

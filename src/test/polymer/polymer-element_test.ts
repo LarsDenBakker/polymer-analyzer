@@ -259,7 +259,6 @@ suite('PolymerElement', () => {
   });
 
   suite('multiple-doc-comments', () => {
-
     async function getElement(filename: string) {
       const elements = await getElements(filename);
       assert.equal(

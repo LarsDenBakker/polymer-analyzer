@@ -20,6 +20,7 @@ import {Visitor} from '../../javascript/estree-visitor';
 import {JavaScriptParser} from '../../javascript/javascript-parser';
 import {ScannedNamespace} from '../../javascript/namespace';
 import {NamespaceScanner} from '../../javascript/namespace-scanner';
+import {ResolvedUrl} from '../../model/url';
 import {FSUrlLoader} from '../../url-loader/fs-url-loader';
 import {CodeUnderliner} from '../test-utils';
 
@@ -31,7 +32,7 @@ suite('NamespaceScanner', () => {
   async function getNamespaces(filename: string): Promise<any[]> {
     const file = await urlLoader.load(filename);
     const parser = new JavaScriptParser();
-    const document = parser.parse(file, filename);
+    const document = parser.parse(file, filename as ResolvedUrl);
     const scanner = new NamespaceScanner();
     const visit = (visitor: Visitor) =>
         Promise.resolve(document.visit([visitor]));
@@ -40,7 +41,7 @@ suite('NamespaceScanner', () => {
         (e) => e instanceof ScannedNamespace);
   };
 
-  test('scans named namespaces', async() => {
+  test('scans named namespaces', async () => {
     const namespaces = await getNamespaces('namespace-named.js');
     assert.equal(namespaces.length, 2);
 
@@ -64,7 +65,7 @@ ExplicitlyNamedNamespace.NestedNamespace = {
 ~~`);
   });
 
-  test('scans unnamed namespaces', async() => {
+  test('scans unnamed namespaces', async () => {
     const namespaces = await getNamespaces('namespace-unnamed.js');
     assert.equal(namespaces.length, 4);
 
@@ -111,7 +112,7 @@ ParentNamespace.BarNamespace = {
 ~~`);
   });
 
-  test('scans named, dynamic namespaces', async() => {
+  test('scans named, dynamic namespaces', async () => {
     const namespaces = await getNamespaces('namespace-dynamic-named.js');
     assert.equal(namespaces.length, 3);
 
@@ -150,7 +151,7 @@ aliasToNamespace = {
 ~~`);
   });
 
-  test('scans unnamed, dynamic namespaces', async() => {
+  test('scans unnamed, dynamic namespaces', async () => {
     const namespaces = await getNamespaces('namespace-dynamic-unnamed.js');
     assert.equal(namespaces.length, 1);
 
@@ -165,7 +166,5 @@ DynamicNamespace['InferredComputedProperty'] = {
 ~~~~~~~~~~~~
 };
 ~~`);
-
   });
-
 });

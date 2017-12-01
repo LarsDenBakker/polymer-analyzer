@@ -13,9 +13,9 @@
  */
 
 import {ImportDeclaration} from 'typescript';
-import {resolve as resolveUrl} from 'url';
 
 import {ScannedImport, SourceRange} from '../model/model';
+import {FileRelativeUrl} from '../model/url';
 import {Scanner} from '../scanning/scanner';
 
 import {Node, ParsedTypeScriptDocument, Visitor} from './typescript-document';
@@ -32,11 +32,11 @@ export class TypeScriptImportScanner implements
         const moduleSpecifier = node.moduleSpecifier.getText();
         // The specifier includes the quote characters, remove them
         const specifierUrl =
-            moduleSpecifier.substring(1, moduleSpecifier.length - 1);
-        const importUrl = resolveUrl(document.url, specifierUrl);
+            moduleSpecifier.substring(1, moduleSpecifier.length - 1) as
+            FileRelativeUrl;
         imports.push(new ScannedImport(
             'js-import',
-            importUrl,
+            ScannedImport.resolveUrl(document.baseUrl, specifierUrl),
             // TODO(justinfagnani): make SourceRanges work
             null as any as SourceRange,
             null as any as SourceRange,

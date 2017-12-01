@@ -22,6 +22,14 @@ import {Document, Import, ScannedImport, Severity, Warning} from '../model/model
  */
 export class ScriptTagImport extends Import { type: 'html-script'; }
 
+/**
+ * A synthetic import that provides the document containing the script tag to
+ * the javascript document defined/referenced by the script tag.
+ */
+export class ScriptTagBackReferenceImport extends Import {
+  type: 'html-script-back-reference';
+}
+
 export class ScannedScriptTagImport extends ScannedImport {
   resolve(document: Document): ScriptTagImport|undefined {
     if (!document._analysisContext.canResolveUrl(this.url)) {
@@ -40,16 +48,34 @@ export class ScannedScriptTagImport extends ScannedImport {
     //
     // See https://github.com/Polymer/polymer-analyzer/issues/615
 
-    const scannedDocument =
-        document._analysisContext._getScannedDocument(this.url);
+    const scannedDocument = document._analysisContext._getScannedDocument(
+        document._analysisContext.resolveUrl(this.url));
     if (scannedDocument) {
       const importedDocument =
           new Document(scannedDocument, document._analysisContext);
-      importedDocument._addFeature(document);
+
+      // Scripts regularly make use of global variables or functions (e.g.
+      // `Polymer()`, `$('#some-id')`, etc) that are defined in libraries
+      // which are loaded via prior script tags or HTML imports.  Since
+      // JavaScript defined within `<script>` tags or loaded by a
+      // `<script src=...>` share scope with other scripts previously
+      // loaded by the page, this synthetic import is added to support
+      // queries for features of the HTML document which should be "visible"
+      // to the JavaScript document.
+      const backReference = new ScriptTagBackReferenceImport(
+          document.url,
+          'html-script-back-reference',
+          document,
+          this.sourceRange,
+          this.urlSourceRange,
+          this.astNode,
+          this.warnings,
+          false);
+      importedDocument._addFeature(backReference);
       importedDocument.resolve();
 
       return new ScriptTagImport(
-          this.url,
+          document._analysisContext.resolveUrl(this.url),
           this.type,
           importedDocument,
           this.sourceRange,
