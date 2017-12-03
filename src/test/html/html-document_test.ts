@@ -30,8 +30,10 @@ suite('ParsedHtmlDocument', () => {
   const basedir = path.join(__dirname, '../static/');
   const file = fs.readFileSync(path.join(basedir, url), 'utf8');
   const analyzer = Analyzer.createForDirectory(basedir);
-  const document: ParsedHtmlDocument =
-      parser.parse(file, analyzer.resolveUrl(url)!, new PackageUrlResolver({}));
+  const document: ParsedHtmlDocument = parser.parse(
+      file,
+      analyzer.resolveUrl(url)!,
+      new PackageUrlResolver({packageDir: basedir}));
   const underliner = new CodeUnderliner(analyzer);
 
   suite('sourceRangeForNode()', () => {
@@ -113,7 +115,9 @@ suite('ParsedHtmlDocument', () => {
     test(testName, async () => {
       const url = analyzer.resolveUrl(`unclosed-tag-attributes.html`)!;
       const document = parser.parse(
-          await analyzer.load(url), url, new PackageUrlResolver({}));
+          await analyzer.load(url),
+          url,
+          new PackageUrlResolver({packageDir: basedir}));
 
       const tag = dom5.query(document.ast, dom5.predicates.hasTagName('tag'))!;
       assert.deepEqual(

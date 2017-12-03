@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
+* [BREAKING] UrlResolvers should now return complete urls, like
+  file:///path/to/paper-button/paper-button.html or
+  https://example.com/components/paper-button/paper-button.html
 * [BREAKING] Removed `Analyzer#resolveUrl` in favor of just exposing the
   `UrlResolver` at `Analyzer#urlResolver.resolve`
 * Add `Analyzer.createForDirectory()` for easily getting a well configured
