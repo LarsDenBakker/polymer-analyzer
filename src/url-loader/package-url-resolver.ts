@@ -11,9 +11,9 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-
-import {posix as pathlib} from 'path';
-import {format as formatUrl, Url} from 'url';
+import * as pathlib from 'path';
+import {posix as posix} from 'path';
+import {Url} from 'url';
 import Uri from 'vscode-uri';
 
 import {parseUrl} from '../core/utils';
@@ -41,16 +41,13 @@ export class PackageUrlResolver extends UrlResolver {
   constructor(options?: PackageUrlResolverOptions) {
     super();
     options = options || {};
-    let packageDir = options.packageDir || process.cwd();
-    if (process.platform === 'win32') {
-      packageDir = packageDir.replace(/\\/g, '/');
-    }
+    const packageDir = options.packageDir || process.cwd();
     this.packageDir = pathlib.resolve(packageDir);
-    if (!this.packageDir.endsWith('/')) {
-      this.packageDir += '/';
+    this.packageUrl =
+        this.brandAsResolved(Uri.file(this.packageDir).toString());
+    if (!this.packageUrl.endsWith('/')) {
+      this.packageUrl = this.brandAsResolved(this.packageUrl + '/');
     }
-    this.packageUrl = this.brandAsResolved(
-        formatUrl({protocol: 'file:', pathname: encodeURI(this.packageDir)}));
     this.componentDir = options.componentDir || 'bower_components/';
     this.hostname = options.hostname || null;
     this.resolvedComponentDir =
@@ -87,14 +84,14 @@ export class PackageUrlResolver extends UrlResolver {
       let unresolvedPathname: string;
       try {
         unresolvedPathname =
-            pathlib.normalize(decodeURI(unresolvedUrl.pathname));
+            posix.normalize(decodeURIComponent(unresolvedUrl.pathname));
       } catch (e) {
         return undefined;
       }
       pathname = pathlib.join(this.packageDir, unresolvedPathname);
     } else {
       try {
-        pathname = pathlib.normalize(decodeURI(url.pathname || ''));
+        pathname = posix.normalize(decodeURIComponent(url.pathname || ''));
       } catch (e) {
         return undefined;  // undecodable url
       }
@@ -156,7 +153,7 @@ export class PackageUrlResolver extends UrlResolver {
     if (this.shouldHandleAsFileUrl(url) && url.pathname) {
       let pathname;
       try {
-        pathname = pathlib.normalize(decodeURI(url.pathname));
+        pathname = posix.normalize(decodeURIComponent(url.pathname));
       } catch {
       }
       if (pathname && pathname.startsWith(this.resolvedComponentDir)) {
