@@ -22,9 +22,10 @@ import {Document} from '../../model/model';
 import {PolymerElement} from '../../polymer/polymer-element';
 import {FSUrlLoader} from '../../url-loader/fs-url-loader';
 import {PackageUrlResolver} from '../../url-loader/package-url-resolver';
+import {fixtureDir} from '../test-utils';
 
 suite('PolymerElement with old jsdoc annotations', () => {
-  const testFilesDir = path.resolve(__dirname, '../static/polymer2-old-jsdoc/');
+  const testFilesDir = path.resolve(fixtureDir, 'polymer2-old-jsdoc/');
   const urlLoader = new FSUrlLoader(testFilesDir);
   const analyzer = new Analyzer({
     urlLoader: urlLoader,

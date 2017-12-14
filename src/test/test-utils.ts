@@ -12,6 +12,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+import * as path from 'path';
 import {Analyzer} from '../core/analyzer';
 import {Document, FileRelativeUrl, ParsedDocument, ResolvedUrl, ScannedFeature, UrlResolver} from '../index';
 import {SourceRange, Warning} from '../model/model';
@@ -155,3 +156,5 @@ export function resolvedUrl(
     strings: TemplateStringsArray, ...values: any[]): ResolvedUrl {
   return noOpTag(strings, ...values) as ResolvedUrl;
 }
+
+export const fixtureDir = path.join(__dirname, '../../src/test/static');

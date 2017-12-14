@@ -89,10 +89,9 @@ task('compile', function () {
   // Use this once typescript-gulp supports `include` in tsconfig:
   // const srcs = tsProject.src();
   return mergeStream(
-    tsResult.js.pipe(sourcemaps.write('../lib')),
-    tsResult.dts,
-    gulp.src(['src/**/*', '!src/**/*.ts']))
-    .pipe(gulp.dest('lib'));
+             tsResult.js.pipe(sourcemaps.write('../lib')),
+             tsResult.dts)
+      .pipe(gulp.dest('lib'));
 });
 
 task('clean', () => {
