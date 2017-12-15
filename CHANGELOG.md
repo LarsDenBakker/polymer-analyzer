@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
-* [BREAKING] UrlResolvers should now return complete urls, like
+* [BREAKING] UrlResolvers must now return complete URLs, like
   file:///path/to/paper-button/paper-button.html or
   https://example.com/components/paper-button/paper-button.html
 * [BREAKING] Removed `Analyzer#resolveUrl` in favor of just exposing the
